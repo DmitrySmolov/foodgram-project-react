@@ -1,9 +1,9 @@
-from django.contrib import admin
+from django.contrib.admin import ModelAdmin, site
 
-from users.models import User
+from users.models import Follow, User
 
 
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(ModelAdmin):
     list_display = (
         'username', 'email', 'first_name', 'last_name', 'is_active'
     )
@@ -13,4 +13,14 @@ class UserAdmin(admin.ModelAdmin):
     ordering = ('username', )
 
 
-admin.site.register(User, UserAdmin)
+class FollowAdmin(ModelAdmin):
+    list_display = (
+        'user',
+        'author',
+    )
+    search_fields = ('user', 'author', )
+    list_filter = ('user', 'author', )
+
+
+site.register(User, UserAdmin)
+site.register(Follow, FollowAdmin)

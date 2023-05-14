@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
-from django.db.models import EmailField, CharField
+from django.db.models import (CASCADE, CharField, CheckConstraint, EmailField,
+                              F, ForeignKey, Model, Q, UniqueConstraint)
 
 
 class User(AbstractUser):
@@ -34,3 +35,43 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Follow(Model):
+    """Модель для сервиса подписки на авторов."""
+    user = ForeignKey(
+        User,
+        blank=False,
+        null=False,
+        on_delete=CASCADE,
+        related_name='follower',
+        verbose_name='Пользователь',
+    )
+    author = ForeignKey(
+        User,
+        blank=False,
+        null=False,
+        on_delete=CASCADE,
+        related_name='following',
+        verbose_name='Автор',
+    )
+
+    class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = (
+            UniqueConstraint(
+                fields=('user', 'author'),
+                name='Cannot follow more then once.'
+            ),
+            CheckConstraint(
+                check=~Q(user=F('author')),
+                name='Cannot follow themselves.'
+            ),
+        )
+
+    def __str__(self):
+        return (
+            f'Пользователь {self.user.get_full_name()} подписан на '
+            f'автора {self.author.get_full_name()}'
+        )
