@@ -35,3 +35,34 @@ class Tag(Model):
 
     def __str__(self):
         return self.name
+
+
+class Ingredient(Model):
+    """
+    Модель ингредиента, связываемая с моделью рецепта через
+    вспомогательную модель 'ингредиент рецепта'.
+    """
+    name = CharField(
+        verbose_name='Название',
+        help_text='Введите название.',
+        max_length=200,
+        unique=True,
+        blank=False,
+        null=False,
+        db_index=True
+    )
+    measurement_unit = CharField(
+        verbose_name='Единица измерения',
+        help_text='Введите единицу измерения.',
+        max_length=200,
+        blank=False,
+        null=False
+    )
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+        ordering = ('name',)
+
+    def __str__(self):
+        return f'{self.name} в {self.measurement_unit}'
