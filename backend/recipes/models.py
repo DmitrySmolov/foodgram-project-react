@@ -1,5 +1,12 @@
 from colorfield.fields import ColorField
-from django.db.models import Model, CharField, SlugField
+from django.contrib.auth import get_user_model
+from django.db.models import (
+    Model, CharField, SlugField, ForeignKey, CASCADE, ImageField,
+    TextField, ManyToManyField, PositiveSmallIntegerField,
+    DateTimeField
+)
+
+User = get_user_model()
 
 
 class Tag(Model):
@@ -40,7 +47,7 @@ class Tag(Model):
 class Ingredient(Model):
     """
     Модель ингредиента, связываемая с моделью рецепта через
-    вспомогательную модель 'ингредиент рецепта'.
+    вспомогательную модель 'ингредиент в рецепте'.
     """
     name = CharField(
         verbose_name='Название',
@@ -66,3 +73,70 @@ class Ingredient(Model):
 
     def __str__(self):
         return f'{self.name} в {self.measurement_unit}'
+
+
+class Recipe(Model):
+    """Модель рецепта."""
+    author = ForeignKey(
+        to=User,
+        on_delete=CASCADE,
+        related_name='recipes',
+        verbose_name='Автор',
+        help_text='Укажите автора'
+    )
+    name = CharField(
+        verbose_name='Название',
+        help_text='Введите название.',
+        max_length=200,
+        blank=False,
+        null=False
+    )
+    image = ImageField(
+        verbose_name='Картинка',
+        help_text='Загрузите картинку.',
+        upload_to='recipes/',
+        blank=False,
+        null=False
+    )
+    text = TextField(
+        verbose_name='Описание',
+        help_text='Введите описание.',
+        blank=False,
+        null=False
+    )
+    ingredients = ManyToManyField(
+        to=Ingredient,
+        through='IngredientInRecipe',
+        related_name='recipes',
+        verbose_name='Ингредиенты',
+        help_text='Выберите ингредиенты.',
+        blank=False,
+        null=False
+    )
+    tags = ManyToManyField(
+        to=Tag,
+        related_name='recipes',
+        verbose_name='Теги',
+        help_text='Выберите один или несколько тегов.',
+        blank=False,
+        null=False
+    )
+    cooking_time = PositiveSmallIntegerField(
+        verbose_name='Время приготовления',
+        help_text='Укажите время приготовления в минутах.',
+        blank=False,
+        null=False
+    )
+    pub_date = DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True,
+        editable=False
+    )
+
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+        ordering = ('-pub_date',)
+
+    def __str__(self):
+        return f'{self.name}, автор {self.author}'
