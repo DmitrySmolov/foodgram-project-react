@@ -1,6 +1,9 @@
-from django.contrib.admin import ModelAdmin, register
+from django.contrib.admin import ModelAdmin, register, display
 
-from recipes.models import Tag, Ingredient, Recipe, IngredientInRecipe
+from recipes.models import (
+    Tag, Ingredient, Recipe, IngredientInRecipe,
+    Favorite
+)
 
 
 @register(Tag)
@@ -19,15 +22,24 @@ class IngredientAdmin(ModelAdmin):
 
 @register(Recipe)
 class RecipeAdmin(ModelAdmin):
-    list_display = ('name', 'author')
-    search_fields = ('name', 'author')
-    list_filter = ('name', 'author', 'tags')
-    # Доделать: На странице рецепта вывести общее
-    # число добавлений этого рецепта в избранное.
+    list_display = ('name', 'author', 'added_to_favorite')
+    search_fields = ('name', 'author__username')
+    list_filter = ('name', 'author__username', 'tags__name')
+
+    @display(description='В избранных (кол-во раз)')
+    def added_to_favorite(self, obj):
+        return obj.favorited.count()
 
 
 @register(IngredientInRecipe)
 class IngredientInRecipeAdmin(ModelAdmin):
     list_display = ('recipe', 'amount', 'ingredient')
-    search_fields = ('recipe', 'ingredient')
-    list_filter = ('recipe', 'ingredient')
+    search_fields = ('recipe__name', 'ingredient__name')
+    list_filter = ('recipe__name', 'ingredient__name')
+
+
+@register(Favorite)
+class FavoriteAdmin(ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user__username', 'recipe__name')

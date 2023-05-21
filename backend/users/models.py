@@ -32,6 +32,7 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Пользователь',
         verbose_name_plural = 'Пользователи'
+        ordering = (-'date_joined',)
 
     def __str__(self):
         return self.username
@@ -59,6 +60,7 @@ class Follow(Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        ordering = ('user__username', 'author__username')
         constraints = (
             UniqueConstraint(
                 fields=('user', 'author'),
@@ -72,6 +74,6 @@ class Follow(Model):
 
     def __str__(self):
         return (
-            f'Пользователь {self.user.get_full_name()} подписан на '
-            f'автора {self.author.get_full_name()}'
+            f'Пользователь {self.user.get_username()} подписан на '
+            f'автора {self.author.get_username()}'
         )

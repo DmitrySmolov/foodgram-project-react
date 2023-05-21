@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import (
     Model, CharField, SlugField, ForeignKey, CASCADE, ImageField,
     TextField, ManyToManyField, PositiveSmallIntegerField,
-    DateTimeField
+    DateTimeField,
 )
 
 User = get_user_model()
@@ -145,11 +145,12 @@ class Recipe(Model):
 class IngredientInRecipe(Model):
     """
     Вспомогательная модель ингредиента в рецепте. Связывает модель ингредиента
-    с моделью рецепта, хранит данные о кол-ве ингредиента в рецепте.
+    с моделью рецепта, хранит данные о количестве ингредиента в рецепте.
     """
     recipe = ForeignKey(
         to=Recipe,
         on_delete=CASCADE,
+        related_name='recipe_ingredients',
         verbose_name='Рецепт',
         blank=False,
         null=False
@@ -162,6 +163,7 @@ class IngredientInRecipe(Model):
     ingredient = ForeignKey(
         to=Ingredient,
         on_delete=CASCADE,
+        related_name='ingredient_recipes',
         blank=False,
         null=False
     )
@@ -174,3 +176,34 @@ class IngredientInRecipe(Model):
 
     def __str__(self):
         return f'{self.ingredient.name} в {self.recipe.name}'
+
+
+class Favorite(Model):
+    """
+    Модель для сервиса списков избранных рецептов авторизованного
+    пользователя.
+    """
+    user = ForeignKey(
+        to=User,
+        on_delete=CASCADE,
+        related_name='favorites',
+        verbose_name='Пользователь',
+        blank=False,
+        null=False
+    )
+    recipe = ForeignKey(
+        to=Recipe,
+        on_delete=CASCADE,
+        related_name='favorited',
+        verbose_name='Рецепт',
+        blank=False,
+        null=False
+    )
+
+    class Meta:
+        verbose_name = 'Избранное'
+        unique_together = ('user', 'recipe')
+        ordering = ('user__username', 'recipe__name')
+
+    def __str__(self):
+        return f'{self.user.get_username()} любит {self.recipe.name}'
