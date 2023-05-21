@@ -140,3 +140,37 @@ class Recipe(Model):
 
     def __str__(self):
         return f'{self.name}, автор {self.author}'
+
+
+class IngredientInRecipe(Model):
+    """
+    Вспомогательная модель ингредиента в рецепте. Связывает модель ингредиента
+    с моделью рецепта, хранит данные о кол-ве ингредиента в рецепте.
+    """
+    recipe = ForeignKey(
+        to=Recipe,
+        on_delete=CASCADE,
+        verbose_name='Рецепт',
+        blank=False,
+        null=False
+    )
+    amount = PositiveSmallIntegerField(
+        verbose_name='Количество',
+        blank=False,
+        null=False
+    )
+    ingredient = ForeignKey(
+        to=Ingredient,
+        on_delete=CASCADE,
+        blank=False,
+        null=False
+    )
+
+    class Meta:
+        verbose_name = 'Ингрединт в рецепте'
+        verbose_name_plural = 'Ингрединты в рецепте'
+        unique_together = ('recipe', 'ingredient')
+        ordering = ('recipe', 'ingredient')
+
+    def __str__(self):
+        return f'{self.ingredient.name} в {self.recipe.name}'
