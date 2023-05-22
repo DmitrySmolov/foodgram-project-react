@@ -45,7 +45,7 @@ class Follow(Model):
         blank=False,
         null=False,
         on_delete=CASCADE,
-        related_name='follower',
+        related_name='follows',
         verbose_name='Пользователь',
     )
     author = ForeignKey(
@@ -53,7 +53,7 @@ class Follow(Model):
         blank=False,
         null=False,
         on_delete=CASCADE,
-        related_name='following',
+        related_name='followed_by',
         verbose_name='Автор',
     )
 

@@ -180,7 +180,7 @@ class IngredientInRecipe(Model):
 
 class Favorite(Model):
     """
-    Модель для сервиса списков избранных рецептов авторизованного
+    Модель для сервиса списка избранных рецептов авторизованного
     пользователя.
     """
     user = ForeignKey(
@@ -194,7 +194,7 @@ class Favorite(Model):
     recipe = ForeignKey(
         to=Recipe,
         on_delete=CASCADE,
-        related_name='favorited',
+        related_name='favorited_by',
         verbose_name='Рецепт',
         blank=False,
         null=False
@@ -207,3 +207,32 @@ class Favorite(Model):
 
     def __str__(self):
         return f'{self.user.get_username()} любит {self.recipe.name}'
+
+
+class ShoppingCart(Model):
+    """Модель для сервиса списка покупок авторизованного пользователя."""
+    user = ForeignKey(
+        to=User,
+        on_delete=CASCADE,
+        related_name='shops_for',
+        verbose_name='Пользователь',
+        blank=False,
+        null=False
+    )
+    recipe = ForeignKey(
+        to=Recipe,
+        on_delete=CASCADE,
+        related_name='shopped_by',
+        verbose_name='Рецепт',
+        blank=False,
+        null=False
+    )
+
+    class Meta:
+        verbose_name = 'Покупка'
+        verbose_name_plural = 'Покупки'
+        unique_together = ('user', 'recipe')
+        ordering = ('user__username', 'recipe__name')
+
+    def __str__(self):
+        return f'{self.user.get_username()} купит {self.recipe.name}'

@@ -2,7 +2,7 @@ from django.contrib.admin import ModelAdmin, register, display
 
 from recipes.models import (
     Tag, Ingredient, Recipe, IngredientInRecipe,
-    Favorite
+    Favorite, ShoppingCart
 )
 
 
@@ -40,6 +40,13 @@ class IngredientInRecipeAdmin(ModelAdmin):
 
 @register(Favorite)
 class FavoriteAdmin(ModelAdmin):
+    list_display = ('user', 'recipe')
+    search_fields = ('user__username', 'recipe__name')
+    list_filter = ('user__username', 'recipe__name')
+
+
+@register(ShoppingCart)
+class ShoppingCartAdmin(ModelAdmin):
     list_display = ('user', 'recipe')
     search_fields = ('user__username', 'recipe__name')
     list_filter = ('user__username', 'recipe__name')
