@@ -110,16 +110,14 @@ class Recipe(Model):
         related_name='recipes',
         verbose_name='Ингредиенты',
         help_text='Выберите ингредиенты.',
-        blank=False,
-        null=False
+        blank=False
     )
     tags = ManyToManyField(
         to=Tag,
         related_name='recipes',
         verbose_name='Теги',
         help_text='Выберите один или несколько тегов.',
-        blank=False,
-        null=False
+        blank=False
     )
     cooking_time = PositiveSmallIntegerField(
         verbose_name='Время приготовления',
@@ -164,6 +162,7 @@ class IngredientInRecipe(Model):
         to=Ingredient,
         on_delete=CASCADE,
         related_name='ingredient_recipes',
+        verbose_name='Ингредиент',
         blank=False,
         null=False
     )
@@ -202,6 +201,7 @@ class Favorite(Model):
 
     class Meta:
         verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
         unique_together = ('user', 'recipe')
         ordering = ('user__username', 'recipe__name')
 
