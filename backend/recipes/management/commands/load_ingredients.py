@@ -16,6 +16,9 @@ class Command(BaseCommand):
             for row in reader:
                 name, measurement_unit = row
                 Ingredient.objects.get_or_create(
-                    name=name,
-                    measurement_unit=measurement_unit
+                    name__iexact=name,
+                    defaults={
+                        'name': name,
+                        'measurement_unit': measurement_unit
+                    }
                 )
