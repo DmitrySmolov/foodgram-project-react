@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from users.models import Follow
 
 User = get_user_model()
 
@@ -46,3 +49,35 @@ class UserSerializer(ModelSerializer):
             representation.pop('is_subscribed')
         representation.pop('password')
         return representation
+
+
+class SubscriptionSerializer(UserSerializer):
+    recipes = ShortRecipeSerializer(many=True)
+    recipes_count = SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + (
+            'recipes', 'recipes_count'
+        )
+        read_only_fields = '__all__'
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+    def validate(self, data):
+        user = self.context.get('request').user
+        author = self.instance
+        if Follow.objects.filter(user=user, author=author).exists():
+            raise ValidationError(
+                detail=(
+                    'Вы уже подписаны на пользователя '
+                    f'{author.get_username()}.'
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if user.pk == author.pk:
+            raise ValidationError(
+                detail='Нельзя подписываться на самого себя.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return {}
