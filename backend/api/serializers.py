@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
+from recipes.models import Tag, Ingredient
 from users.models import Follow
 
 User = get_user_model()
@@ -52,6 +53,7 @@ class UserSerializer(ModelSerializer):
 
 
 class SubscriptionSerializer(UserSerializer):
+    """Сериализатор сервиса подписок."""
     recipes = ShortRecipeSerializer(many=True)
     recipes_count = SerializerMethodField()
 
@@ -81,3 +83,19 @@ class SubscriptionSerializer(UserSerializer):
                 code=status.HTTP_400_BAD_REQUEST
             )
         return {}
+
+
+class TagSerializer(ModelSerializer):
+    """Сериализатор тегов."""
+    class Meta:
+        model = Tag
+        fields = '__all__'
+        read_only_fields = '__all__'
+
+
+class IngredientSerializer(ModelSerializer):
+    """Сериализатор ингредиентов."""
+    class Meta:
+        model = Ingredient
+        fields = '__all__'
+        read_only_fields = '__all__'

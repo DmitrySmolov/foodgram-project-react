@@ -5,7 +5,12 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from api.serializers import UserSerializer, SubscriptionSerializer
+from rest_framework.viewsets import ModelViewSet
+from api.serializers import (
+    UserSerializer, SubscriptionSerializer, IngredientSerializer,
+    TagSerializer
+)
+from recipes.models import Ingredient, Tag
 from users.models import Follow
 
 User = get_user_model()
@@ -54,3 +59,17 @@ class UserViewSet(UserViewSet):
         follow = get_object_or_404(klass=Follow, user=user, author=author)
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class TagViewSet(ModelViewSet):
+    """Вьюсет для тегов."""
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    # TO DO: permission
+
+
+class IngredientViewSet(ModelViewSet):
+    """Вьюсет для ингредиентов."""
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    # TO DO: permission, filter search
