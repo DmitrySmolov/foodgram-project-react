@@ -30,7 +30,7 @@ class UserSerializer(ModelSerializer):
         return (
             user.is_authenticated and
             user is not obj and
-            user.follows.filter(author=obj).exists()
+            user.follows.filter(followee=obj).exists()
         )
 
     def create(self, validated_data):
@@ -54,7 +54,7 @@ class UserSerializer(ModelSerializer):
 
 class SubscriptionSerializer(UserSerializer):
     """Сериализатор сервиса подписок."""
-    recipes = ShortRecipeSerializer(many=True)
+    recipes = ShortRecipeSerializer(many=True)  # TO DO this serializer
     recipes_count = SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
@@ -67,17 +67,19 @@ class SubscriptionSerializer(UserSerializer):
         return obj.recipes.count()
 
     def validate(self, data):
-        user = self.context.get('request').user
-        author = self.instance
-        if Follow.objects.filter(user=user, author=author).exists():
+        follower = self.context.get('request').user
+        followee = self.instance
+        if Follow.objects.filter(
+            follower=follower, followee=followee
+        ).exists():
             raise ValidationError(
                 detail=(
                     'Вы уже подписаны на пользователя '
-                    f'{author.get_username()}.'
+                    f'{followee.get_username()}.'
                 ),
                 code=status.HTTP_400_BAD_REQUEST
             )
-        if user.pk == author.pk:
+        if follower.pk == followee.pk:
             raise ValidationError(
                 detail='Нельзя подписываться на самого себя.',
                 code=status.HTTP_400_BAD_REQUEST

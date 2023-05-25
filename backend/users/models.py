@@ -40,7 +40,7 @@ class User(AbstractUser):
 
 class Follow(Model):
     """Модель для сервиса подписки на авторов."""
-    user = ForeignKey(
+    follower = ForeignKey(
         User,
         blank=False,
         null=False,
@@ -48,7 +48,7 @@ class Follow(Model):
         related_name='follows',
         verbose_name='Пользователь',
     )
-    author = ForeignKey(
+    followee = ForeignKey(
         User,
         blank=False,
         null=False,
@@ -60,20 +60,20 @@ class Follow(Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
-        ordering = ('user__username', 'author__username')
+        ordering = ('follower__username', 'followee__username')
         constraints = (
             UniqueConstraint(
-                fields=('user', 'author'),
+                fields=('follower', 'followee'),
                 name='Cannot follow more then once.'
             ),
             CheckConstraint(
-                check=~Q(user=F('author')),
+                check=~Q(user=F('followee')),
                 name='Cannot follow themselves.'
             ),
         )
 
     def __str__(self):
         return (
-            f'Пользователь {self.user.get_username()} подписан на '
-            f'автора {self.author.get_username()}'
+            f'Пользователь {self.follower.get_username()} подписан на '
+            f'автора {self.followee.get_username()}'
         )

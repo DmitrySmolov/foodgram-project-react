@@ -3,9 +3,9 @@ from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from api.permissions import IsOwnerAdminOrReadOnly
 from api.serializers import (
     UserSerializer, SubscriptionSerializer, IngredientSerializer,
     TagSerializer
@@ -22,11 +22,10 @@ class UserViewSet(UserViewSet):
 
     @action(
         methods=('get',),
-        detail=False,
-        permission_classes=(IsAuthenticated,)
+        detail=False
     )
     def subscriptions(self, request):
-        queryset = User.objects.filter(followed_by__user=request.user)
+        queryset = User.objects.filter(followed_by__follower=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = SubscriptionSerializer(
             instance=pages,
@@ -38,25 +37,27 @@ class UserViewSet(UserViewSet):
     @action(
         methods=('post', 'delete'),
         detail=True,
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsOwnerAdminOrReadOnly,)
     )
     def subscribe(self, request, id):
-        user = request.user
-        author = get_object_or_404(klass=User, id=id)
+        follower = request.user
+        followee = get_object_or_404(klass=User, id=id)
 
         if request.method == 'POST':
             serializer = SubscriptionSerializer(
-                instance=author,
+                instance=followee,
                 data=request.data,
                 context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
-            Follow.objects.create(user=user, author=author)
+            Follow.objects.create(follower=follower, followee=followee)
             return Response(
                 data=serializer.data,
                 status=status.HTTP_201_CREATED
             )
-        follow = get_object_or_404(klass=Follow, user=user, author=author)
+        follow = get_object_or_404(
+            klass=Follow, follower=follower, followee=followee
+        )
         follow.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -65,11 +66,12 @@ class TagViewSet(ModelViewSet):
     """Вьюсет для тегов."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    # TO DO: permission
+    permission_classes = (IsOwnerAdminOrReadOnly,)
 
 
 class IngredientViewSet(ModelViewSet):
     """Вьюсет для ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    # TO DO: permission, filter search
+    permission_classes = (IsOwnerAdminOrReadOnly,)
+    # TO DO: filter search
