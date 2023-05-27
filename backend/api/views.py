@@ -8,15 +8,16 @@ from rest_framework.viewsets import ModelViewSet
 from api.permissions import IsOwnerAdminOrReadOnly
 from api.serializers import (
     UserSerializer, SubscriptionSerializer, IngredientSerializer,
-    TagSerializer
+    TagSerializer, RecipeCreateUpdateSerializer, RecipeReadSerializer
 )
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient, Tag, Recipe
 from users.models import Follow
 
 User = get_user_model()
 
 
 class UserViewSet(UserViewSet):
+    """Вьюсет для работы с пользователями."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
@@ -63,15 +64,28 @@ class UserViewSet(UserViewSet):
 
 
 class TagViewSet(ModelViewSet):
-    """Вьюсет для тегов."""
+    """Вьюсет для работы с тегами."""
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (IsOwnerAdminOrReadOnly,)
 
 
 class IngredientViewSet(ModelViewSet):
-    """Вьюсет для ингредиентов."""
+    """Вьюсет дляработы с  ингредиентами."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsOwnerAdminOrReadOnly,)
     # TO DO: filter search
+
+
+class RecipeViewSet(ModelViewSet):
+    """Вьюсет для работы с рецептами."""
+    queryset = Recipe.objects.all()
+    permission_classes = (IsOwnerAdminOrReadOnly,)
+    # TO DO: filter search
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return RecipeReadSerializer
+        elif self.action in ('create', 'update'):
+            return RecipeCreateUpdateSerializer
