@@ -15,6 +15,6 @@ class UserAdmin(ModelAdmin):
 
 @register(Follow)
 class FollowAdmin(ModelAdmin):
-    list_display = ('user', 'author')
-    search_fields = ('user__username', 'author__username')
-    list_filter = ('user__username', 'author__username')
+    list_display = ('follower', 'followee')
+    search_fields = ('follower__username', 'followee__username')
+    list_filter = ('follower__username', 'followee__username')

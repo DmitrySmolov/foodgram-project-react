@@ -67,7 +67,7 @@ class Follow(Model):
                 name='Cannot follow more then once.'
             ),
             CheckConstraint(
-                check=~Q(user=F('followee')),
+                check=~Q(follower=F('followee')),
                 name='Cannot follow themselves.'
             ),
         )

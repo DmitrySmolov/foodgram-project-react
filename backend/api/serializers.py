@@ -1,4 +1,5 @@
 import base64
+import re
 import uuid
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -96,7 +97,10 @@ class RecipeReadSerializer(ModelSerializer):
     """Сериализатор для чтения рецептов."""
     tags = TagSerializer(many=True)
     author = UserSerializer()
-    ingredients = IngredientInRecipeSerializer(many=True)
+    ingredients = IngredientInRecipeSerializer(
+        source='recipe_ingredients',
+        many=True
+    )
     is_favorited = SerializerMethodField()
     is_in_shopping_cart = SerializerMethodField()
 
@@ -117,8 +121,8 @@ class RecipeReadSerializer(ModelSerializer):
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user
-        return all(
-            user.is_authenticated,
+        return (
+            user.is_authenticated and
             user.favorites.filter(recipe=obj).exists()
         )
 
@@ -133,8 +137,8 @@ class RecipeReadSerializer(ModelSerializer):
         representation = super().to_representation(instance)
         request = self.context.get('request')
         if request and (
-            request.path == reverse('api:users-subscriptions') or
-            request.path == reverse('api:users-subscribe')
+            re.match(r'^/api/users/[^/]+/subscribe$', request.path) or
+            request.path == '/api/users/subscriptions'
         ):
             trimmed_fields = ('id', 'name', 'image', 'cooking_time')
             return {field: representation[field] for field in trimmed_fields}
