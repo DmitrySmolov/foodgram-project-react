@@ -73,7 +73,7 @@ class SimpleRecipeSerializer(ModelSerializer):
 
 class SubscriptionSerializer(UserSerializer):
     """Сериализатор сервиса подписок."""
-    recipes = SimpleRecipeSerializer(many=True)
+    recipes = SerializerMethodField()
     recipes_count = SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
@@ -82,6 +82,13 @@ class SubscriptionSerializer(UserSerializer):
             'recipes_count'
         )
         read_only_fields = fields
+
+    def get_recipes(self, obj):
+        limit = self.context.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if limit:
+            recipes = recipes[int(limit):]
+        return SimpleRecipeSerializer(instance=recipes, many=True).data
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()

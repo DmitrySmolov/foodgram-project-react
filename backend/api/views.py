@@ -3,6 +3,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.status import (
     HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
 )
@@ -11,6 +12,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from api.filters import RecipeFilter, IngredientFilter
 from api.permissions import IsOwnerAdminOrReadOnly, IsActive
 from api.serializers import (
     UserSerializer, SubscriptionSerializer, IngredientSerializer,
@@ -97,11 +99,15 @@ class UserViewSet(AddRemoveMixin, UserViewSet):
     )
     def subscriptions(self, request):
         queryset = User.objects.filter(followed_by__follower=request.user)
+        recipes_limit = request.query_params.get('recipes_limit')
         pages = self.paginate_queryset(queryset)
         serializer = SubscriptionSerializer(
             instance=pages,
             many=True,
-            context={'request': request}
+            context={
+                'request': request,
+                'recipes_limit': recipes_limit
+            }
         )
         return self.get_paginated_response(serializer.data)
 
@@ -118,14 +124,17 @@ class TagViewSet(ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = (IsOwnerAdminOrReadOnly,)
+    pagination_class = None
 
 
 class IngredientViewSet(ModelViewSet):
-    """Вьюсет дляработы с  ингредиентами."""
+    """Вьюсет для работы с  ингредиентами."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsOwnerAdminOrReadOnly,)
-    # TO DO: filter search
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
+    pagination_class = None
 
 
 class RecipeViewSet(AddRemoveMixin, ModelViewSet):
@@ -134,7 +143,8 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
     lookup_field = 'id'
     add_remove_user_field_name = 'user'
     add_remove_instance_field_name = 'recipe'
-    # TO DO: filter search
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
