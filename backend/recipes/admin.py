@@ -15,7 +15,7 @@ class TagAdmin(ModelAdmin):
 
 @register(Ingredient)
 class IngredientAdmin(ModelAdmin):
-    list_display = ('name', 'measurement_unit')
+    list_display = ('id', 'name', 'measurement_unit')
     search_fields = ('name',)
     list_filter = ('measurement_unit',)
 

@@ -7,13 +7,15 @@ from rest_framework.status import (
     HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
 )
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from api.permissions import IsOwnerAdminOrReadOnly, IsActive
 from api.serializers import (
     UserSerializer, SubscriptionSerializer, IngredientSerializer,
-    TagSerializer, RecipeCreateUpdateSerializer, RecipeReadSerializer
+    TagSerializer, RecipeCreateUpdateSerializer, RecipeReadSerializer,
+    UserRecipeRelationSerializer
 )
 from recipes.models import (
     Ingredient, IngredientInRecipe, Tag, Recipe, Favorite, ShoppingCart
@@ -26,30 +28,48 @@ User = get_user_model()
 class AddRemoveMixin:
     """
     Миксин для типичных действий добавления/удаления подписки на другого
-    пользователя, записи рецепта в избранное или в корзину.
+    пользователя, записи рецепта в избранное или в корзину пользователя.
     """
-    def add_remove_action(self, request, id, action_model):
+    def add_remove_action(self, request, id, model):
+        user_field_name = self.add_remove_user_field_name
+        instance_field_name = self.add_remove_instance_field_name
         user = request.user
-        instance = self.get_object()
+        instance = get_object_or_404(
+            self.get_queryset(),
+            id=id
+        )
         if request.method == 'POST':
-            action_model.objects.create(**{
-                self.add_remove_user_field_name: user,
-                self.add_remove_instance_field_name: instance
-            })
-            return Response(status=HTTP_201_CREATED)
+            serializer = self.get_serializer(instance)
+            serializer.validate()
+            model.objects.create(
+                **{
+                    user_field_name: user, instance_field_name: instance
+                }
+            )
+
+            return Response(
+                data=serializer.data, status=HTTP_201_CREATED
+            )
         if request.method == 'DELETE':
-            action = get_object_or_404(action_model, **{
-                self.add_remove_user_field_name: user,
-                self.add_remove_instance_field_name: instance
-            })
-            action.delete()
+            relation = model.objects.filter(
+                **{
+                    user_field_name: user,
+                    instance_field_name: instance
+                }
+            )
+            if not relation.exists():
+                model_name = model._meta.verbose_name
+                raise ValidationError(
+                    detail=f'Такой записи в {model_name} и не было.',
+                    code=HTTP_400_BAD_REQUEST
+                )
+            relation.delete()
             return Response(status=HTTP_204_NO_CONTENT)
 
 
 class UserViewSet(AddRemoveMixin, UserViewSet):
     """Вьюсет для работы с пользователями."""
     queryset = User.objects.all()
-    serializer_class = UserSerializer
     add_remove_user_field_name = 'follower'
     add_remove_instance_field_name = 'followee'
 
@@ -59,7 +79,17 @@ class UserViewSet(AddRemoveMixin, UserViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return (AllowAny(),)
-        return super().get_permissions()
+        if (
+            self.action == 'subscribe' and
+            self.request.method == 'POST'
+        ):
+            return (IsActive(),)
+        return (IsOwnerAdminOrReadOnly(),)
+
+    def get_serializer_class(self):
+        if self.action == 'subscribe':
+            return SubscriptionSerializer
+        return UserSerializer
 
     @action(
         methods=('get',),
@@ -77,8 +107,7 @@ class UserViewSet(AddRemoveMixin, UserViewSet):
 
     @action(
         methods=('post', 'delete'),
-        detail=True,
-        permission_classes=(IsOwnerAdminOrReadOnly,)
+        detail=True
     )
     def subscribe(self, request, id):
         return self.add_remove_action(request, id, Follow)
@@ -102,7 +131,7 @@ class IngredientViewSet(ModelViewSet):
 class RecipeViewSet(AddRemoveMixin, ModelViewSet):
     """Вьюсет для работы с рецептами."""
     queryset = Recipe.objects.all()
-    permission_classes = (IsOwnerAdminOrReadOnly,)
+    lookup_field = 'id'
     add_remove_user_field_name = 'user'
     add_remove_instance_field_name = 'recipe'
     # TO DO: filter search
@@ -112,22 +141,46 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
             return RecipeReadSerializer
         elif self.action in ('create', 'update'):
             return RecipeCreateUpdateSerializer
+        elif self.action in ('shopping_cart', 'favorite'):
+            return UserRecipeRelationSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+
+        if (
+            serializer_class == UserRecipeRelationSerializer and
+            self.action in ('favorite', 'shopping_cart')
+        ):
+            kwargs['context'] = self.get_serializer_context()
+            kwargs['model'] = (
+                Favorite if self.action == 'favorite' else ShoppingCart
+            )
+        elif 'context' not in kwargs:
+            kwargs['context'] = self.get_serializer_context()
+        return serializer_class(*args, **kwargs)
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return (IsActive(),)
+        if (
+            self.action in ('shopping_cart', 'favorite')
+        ) and self.request.method == 'POST':
+            return (IsActive(),)
+        return (IsOwnerAdminOrReadOnly(),)
 
     def is_owner(self, request, obj):
         return obj.author == request.user
 
     @action(
         methods=('post', 'delete'),
-        detail=True,
-        permission_classes=(IsOwnerAdminOrReadOnly,)
+        detail=True
     )
     def shopping_cart(self, request, id):
         return self.add_remove_action(request, id, ShoppingCart)
 
     @action(
         methods=('post', 'delete'),
-        detail=True,
-        permission_classes=(IsOwnerAdminOrReadOnly,)
+        detail=True
     )
     def favorite(self, request, id):
         return self.add_remove_action(request, id, Favorite)
@@ -151,7 +204,7 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
         ).annotate(amount=Sum('amount'))
         text = 'ВАШ СПИСОК ПОКУПОК: \n\n'
         text += '\n'.join([
-            f"- {ingredient['ingredient__name']}"
+            f"\u2022 {ingredient['ingredient__name']}"
             f" ({ingredient['ingredient__measurement_unit']})"
             f" -- {ingredient['amount']}"
             for ingredient in ingredients

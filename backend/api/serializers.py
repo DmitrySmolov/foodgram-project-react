@@ -8,9 +8,11 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     ModelSerializer, SerializerMethodField, PrimaryKeyRelatedField,
-    ReadOnlyField, ImageField, CurrentUserDefault
+    ReadOnlyField, ImageField, CurrentUserDefault, HiddenField
 )
-from recipes.models import Tag, Ingredient, Recipe, IngredientInRecipe
+from recipes.models import (
+    Tag, Ingredient, Recipe, IngredientInRecipe
+)
 from users.models import Follow
 
 User = get_user_model()
@@ -59,6 +61,52 @@ class UserSerializer(ModelSerializer):
         return representation
 
 
+class SimpleRecipeSerializer(ModelSerializer):
+    """
+    Сериализатор для упрощённого отображения рецептов при работе с подписками
+    и списками избранного и покупок."""
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+        read_only_fields = fields
+
+
+class SubscriptionSerializer(UserSerializer):
+    """Сериализатор сервиса подписок."""
+    recipes = SimpleRecipeSerializer(many=True)
+    recipes_count = SerializerMethodField()
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + (
+            'recipes',
+            'recipes_count'
+        )
+        read_only_fields = fields
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+    def validate(self):
+        follower = self.context.get('request').user
+        followee = self.instance
+        if Follow.objects.filter(
+            follower=follower, followee=followee
+        ).exists():
+            raise ValidationError(
+                detail=(
+                    'Вы уже подписаны на пользователя '
+                    f'{followee.get_username()}.'
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        if follower.pk == followee.pk:
+            raise ValidationError(
+                detail='Нельзя подписываться на самого себя.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return {}
+
+
 class TagSerializer(ModelSerializer):
     """Сериализатор тегов."""
     class Meta:
@@ -76,7 +124,8 @@ class IngredientSerializer(ModelSerializer):
 class IngredientInRecipeSerializer(ModelSerializer):
     """Сериализатор для работы с ингрединтами в рецепте."""
     id = PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all()
+        queryset=Ingredient.objects.all(),
+        source='ingredient'
     )
     name = ReadOnlyField(source='ingredient.name')
     measurement_unit = ReadOnlyField(
@@ -146,42 +195,6 @@ class RecipeReadSerializer(ModelSerializer):
         return representation
 
 
-class SubscriptionSerializer(UserSerializer):
-    """Сериализатор сервиса подписок."""
-    recipes = RecipeReadSerializer(many=True)
-    recipes_count = SerializerMethodField()
-
-    class Meta(UserSerializer.Meta):
-        fields = UserSerializer.Meta.fields + (
-            'recipes',
-            'recipes_count'
-        )
-        read_only_fields = '__all__'
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
-
-    def validate(self, data):
-        follower = self.context.get('request').user
-        followee = self.instance
-        if Follow.objects.filter(
-            follower=follower, followee=followee
-        ).exists():
-            raise ValidationError(
-                detail=(
-                    'Вы уже подписаны на пользователя '
-                    f'{followee.get_username()}.'
-                ),
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if follower.pk == followee.pk:
-            raise ValidationError(
-                detail='Нельзя подписываться на самого себя.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        return {}
-
-
 class Base64ImageField(ImageField):
     """
     Кастомный тип поля для работы с картинками в формате строки base64.
@@ -199,7 +212,7 @@ class Base64ImageField(ImageField):
 
 class RecipeCreateUpdateSerializer(ModelSerializer):
     """Сериализатор для создания и изменения рецепта."""
-    author = CurrentUserDefault()
+    author = HiddenField(default=CurrentUserDefault())
     ingredients = IngredientInRecipeSerializer(many=True)
     tags = PrimaryKeyRelatedField(
         queryset=Tag.objects.all(),
@@ -216,27 +229,22 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_ingredients(self, value):
         if not value:
             raise ValidationError(
-                {'ingredients': 'В рецепте нет ингредиентов.'}
+                detail='В рецепте нет ингредиентов.'
             )
         ingredients = []
         for item in value:
-            if not Ingredient.objects.filter(id=item['id']).exists():
+            ingredient = item.get('ingredient')
+            if not ingredient:
                 raise ValidationError(
-                    {
-                        'ingredients':
-                            'В рецепте указаны недоступные ингредиенты.'
-                    }
+                    detail='В рецепте указаны недоступные ингредиенты.'
                 )
             if item in ingredients:
                 raise ValidationError(
-                    {'ingredients': 'В рецепте повторяются ингредиенты.'}
+                    detail='В рецепте повторяются ингредиенты.'
                 )
             if item['amount'] < 1:
                 raise ValidationError(
-                    {
-                        'ingredients':
-                            'В рецепте есть ингредиент в количестве меньше 1.'
-                    }
+                    detail='В рецепте есть ингредиент в количестве меньше 1.'
                 )
             ingredients.append(item)
         return value
@@ -244,20 +252,17 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_tags(self, value):
         if not value:
             raise ValidationError(
-                {'tags': 'В рецепте нет ни одного тега.'}
+                detail='В рецепте нет ни одного тега.'
             )
         tags = []
         for item in value:
-            if not Tag.objects.filter(id=item).exists():
+            if not Tag.objects.filter(id=item.id).exists():
                 raise ValidationError(
-                    {
-                        'tags':
-                            'В рецепте указаны недоступные теги.'
-                    }
+                    detail='В рецепте указаны недоступные теги.'
                 )
             if item in tags:
                 raise ValidationError(
-                    {'tags': 'В рецепте повторяются теги.'}
+                    detail='В рецепте повторяются теги.'
                 )
             tags.append(item)
         return value
@@ -265,10 +270,7 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_cooking_time(self, value):
         if value < 1:
             raise ValidationError(
-                {
-                    'cooking_time':
-                        'Указано время приготовления меньше 1 минуты.'
-                }
+                detail='Указано время приготовления меньше 1 минуты.'
             )
         return value
 
@@ -307,3 +309,28 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
         return RecipeReadSerializer(
             instance, context={'request': self.context.get('request')}
         ).data
+
+
+class UserRecipeRelationSerializer(SimpleRecipeSerializer):
+    """
+    Сериализатор для работы с типичными связями 'пользователь-рецепт':
+    список избранного или список покупок.
+    """
+    def __init__(self, *args, **kwargs):
+        self.model = kwargs.pop('model', None)
+        super().__init__(*args, **kwargs)
+
+    def validate(self):
+        user = self.context.get('request').user
+        recipe = self.instance
+        if self.model.objects.filter(
+            user=user, recipe=recipe
+        ).exists():
+            model_name = self.model._meta.verbose_name
+            raise ValidationError(
+                detail=(
+                    f'Вы уже добавляли этот рецепт в {model_name}.'
+                ),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return {}
