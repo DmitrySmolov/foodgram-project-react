@@ -1,18 +1,17 @@
 import base64
 import re
 import uuid
+
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.urls import reverse
+from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
-from rest_framework.serializers import (
-    ModelSerializer, SerializerMethodField, PrimaryKeyRelatedField,
-    ReadOnlyField, ImageField, CurrentUserDefault, HiddenField
-)
-from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientInRecipe
-)
+from rest_framework.serializers import (CurrentUserDefault, HiddenField,
+                                        ImageField, ModelSerializer,
+                                        PrimaryKeyRelatedField, ReadOnlyField,
+                                        SerializerMethodField)
 from users.models import Follow
 
 User = get_user_model()

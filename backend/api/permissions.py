@@ -1,7 +1,6 @@
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import (
-    IsAuthenticated, IsAuthenticatedOrReadOnly, SAFE_METHODS
-)
+from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 
 User = get_user_model()
 
@@ -23,6 +22,8 @@ class IsActiveOrReadOnly(IsAuthenticatedOrReadOnly):
     что он не забанен, в противном случае - только чтение.
     """
     def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return super().has_permission(request, view)
         return (
             super().has_permission(request, view) and
             request.user.is_active
@@ -36,14 +37,11 @@ class IsOwnerAdminOrReadOnly(IsActiveOrReadOnly):
     """
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
-            return (
-                request.user and
-                request.user.is_authenticated and
-                request.user.is_active
-            )
-        if request.user.is_staff:
-            return True
-        return self.is_owner(request, obj)
+            return super().has_permission(request, view)
+        return (
+            (request.user.is_staff or self.is_owner(request, obj)) and
+            super().has_permission(request, view)
+        )
 
     def is_owner(self, request, obj):
         """Метод определяется во вьюсетах для обозначения владельца записи."""

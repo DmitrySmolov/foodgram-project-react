@@ -1,9 +1,7 @@
-from django.contrib.admin import ModelAdmin, register, display, TabularInline
+from django.contrib.admin import ModelAdmin, TabularInline, display, register
 
-from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientInRecipe,
-    Favorite, ShoppingCart
-)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 
 
 @register(Tag)

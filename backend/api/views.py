@@ -2,27 +2,26 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from djoser.views import UserViewSet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.status import (
-    HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_400_BAD_REQUEST
-)
+from djoser.views import UserViewSet
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
+                                   HTTP_400_BAD_REQUEST)
 from rest_framework.viewsets import ModelViewSet
-from api.filters import RecipeFilter, IngredientFilter
-from api.permissions import IsOwnerAdminOrReadOnly, IsActive
-from api.serializers import (
-    UserSerializer, SubscriptionSerializer, IngredientSerializer,
-    TagSerializer, RecipeCreateUpdateSerializer, RecipeReadSerializer,
-    UserRecipeRelationSerializer
-)
-from recipes.models import (
-    Ingredient, IngredientInRecipe, Tag, Recipe, Favorite, ShoppingCart
-)
 from users.models import Follow
+
+from api.filters import IngredientFilter, RecipeFilter
+from api.permissions import IsActive, IsOwnerAdminOrReadOnly
+from api.serializers import (IngredientSerializer,
+                             RecipeCreateUpdateSerializer,
+                             RecipeReadSerializer, SubscriptionSerializer,
+                             TagSerializer, UserRecipeRelationSerializer,
+                             UserSerializer)
 
 User = get_user_model()
 
