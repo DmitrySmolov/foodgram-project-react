@@ -1,8 +1,12 @@
 from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
+from django.core.validators import MinValueValidator
 from django.db.models import (CASCADE, CharField, DateTimeField, ForeignKey,
                               ImageField, ManyToManyField, Model,
-                              PositiveSmallIntegerField, SlugField, TextField)
+                              PositiveSmallIntegerField, SlugField, TextField,
+                              UniqueConstraint)
+
+from foodgram.settings import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
 
 User = get_user_model()
 
@@ -120,6 +124,10 @@ class Recipe(Model):
     cooking_time = PositiveSmallIntegerField(
         verbose_name='Время приготовления',
         help_text='Укажите время приготовления в минутах.',
+        validators=(MinValueValidator(
+             limit_value=MIN_COOKING_TIME,
+             message=f'Время приготовления не меньше {MIN_COOKING_TIME}.'
+        ),),
         blank=False,
         null=False
     )
@@ -146,20 +154,24 @@ class IngredientInRecipe(Model):
     recipe = ForeignKey(
         to=Recipe,
         on_delete=CASCADE,
-        related_name='recipe_ingredients',
+        related_name='ingredients',
         verbose_name='Рецепт',
         blank=False,
         null=False
     )
     amount = PositiveSmallIntegerField(
         verbose_name='Количество',
+        validators=(MinValueValidator(
+             limit_value=MIN_INGREDIENT_AMOUNT,
+             message=f'Количество не меньше {MIN_INGREDIENT_AMOUNT}.'
+        ),),
         blank=False,
         null=False
     )
     ingredient = ForeignKey(
         to=Ingredient,
         on_delete=CASCADE,
-        related_name='ingredient_recipes',
+        related_name='recipes',
         verbose_name='Ингредиент',
         blank=False,
         null=False
@@ -170,6 +182,10 @@ class IngredientInRecipe(Model):
         verbose_name_plural = 'Ингрединты в рецепте'
         unique_together = ('recipe', 'ingredient')
         ordering = ('recipe', 'ingredient')
+        constraints = (UniqueConstraint(
+            fields=('recipe', 'ingredient'),
+            name='Cannot be twice in the same recipe.'
+        ),)
 
     def __str__(self):
         return f'{self.ingredient.name} в {self.recipe.name}'
@@ -200,8 +216,11 @@ class Favorite(Model):
     class Meta:
         verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
-        unique_together = ('user', 'recipe')
         ordering = ('user__username', 'recipe__name')
+        constraints = (UniqueConstraint(
+            fields=('user', 'recipe'),
+            name='Cannot add to favorite twice.'
+        ),)
 
     def __str__(self):
         return f'{self.user.get_username()} любит {self.recipe.name}'
@@ -229,8 +248,11 @@ class ShoppingCart(Model):
     class Meta:
         verbose_name = 'Покупка'
         verbose_name_plural = 'Покупки'
-        unique_together = ('user', 'recipe')
         ordering = ('user__username', 'recipe__name')
+        constraints = (UniqueConstraint(
+            fields=('user', 'recipe'),
+            name='Cannot add to shopping cart twice.'
+        ),)
 
     def __str__(self):
         return f'{self.user.get_username()} купит {self.recipe.name}'

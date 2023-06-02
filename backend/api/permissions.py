@@ -1,48 +1,64 @@
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import (SAFE_METHODS, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (BasePermission, SAFE_METHODS)
 
 User = get_user_model()
 
 
-class IsActive(IsAuthenticated):
+class IsActive(BasePermission):
     """
     Разрешение только авторизованному пользователю, если он не забанен.
     """
-    def has_permission(self, request, view):
+    def has_permission(self, request, _):
         return (
-            super().has_permission(request, view) and
-            request.user.is_active
+            request.user.is_authenticated and request.user.is_active
         )
 
 
-class IsActiveOrReadOnly(IsAuthenticatedOrReadOnly):
+class IsActiveOrReadOnly(IsActive):
     """
     Разрешение на редактирование для авторизованного пользователя при условии,
     что он не забанен, в противном случае - только чтение.
     """
     def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:
-            return super().has_permission(request, view)
         return (
-            super().has_permission(request, view) and
-            request.user.is_active
+            super().has_permission(request, view) or
+            request.method in SAFE_METHODS
         )
 
 
-class IsOwnerAdminOrReadOnly(IsActiveOrReadOnly):
+class IsAdminOrReadOnly(IsActiveOrReadOnly):
+    """Разрешение на редактирование только админу."""
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_staff or (request.method in SAFE_METHODS)
+
+
+class IsOwnerAdminOrReadOnly(IsAdminOrReadOnly):
     """
-    Разрешение на редактирование своих записей подписок, рецептов, избранного,
-    списка покупок, для админа - всех записей, в противном случае - чтение.
+    Разрешение на редактирование хозяину своих записей (определяется в
+    подклассе), админу - всех записей, в противном случае - чтение.
     """
     def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return super().has_permission(request, view)
         return (
-            (request.user.is_staff or self.is_owner(request, obj)) and
-            super().has_permission(request, view)
+            self.is_owner(request, obj) or
+            super().has_object_permission(request, view, obj)
         )
 
     def is_owner(self, request, obj):
-        """Метод определяется во вьюсетах для обозначения владельца записи."""
+        """Метод определяется в подклассе для обозначения владельца записи."""
         raise NotImplementedError
+
+
+class IsAuthorAdminOrReadOnly(IsOwnerAdminOrReadOnly):
+    """
+    Разрешение на редактирование для автора рецепта, админа или только чтение.
+    """
+    def is_owner(self, request, obj):
+        return obj.author == request.user
+
+
+class IsFollowerAdminOrReadOnly(IsOwnerAdminOrReadOnly):
+    """
+    Разрешение на редактирование для подписчика, админа или только чтение.
+    """
+    def is_owner(self, request, obj):
+        return obj.followed_by.filter(follower=request.user).first()

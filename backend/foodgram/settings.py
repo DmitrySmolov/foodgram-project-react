@@ -14,7 +14,7 @@ SECRET_KEY = str(os.getenv(
     default='Ska-badabadabadoo-belidabbelydabbladabbladabblabab'
 ))
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', default='True')
 
 ALLOWED_HOSTS = ['*']
 
@@ -144,3 +144,9 @@ DJOSER = {
         "user_list": ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
     },
 }
+
+MIN_INGREDIENT_AMOUNT = 1
+
+MIN_COOKING_TIME = 1
+
+SHOPPING_CART_CONTENT_TYPE = 'text/plain'
