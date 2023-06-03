@@ -14,51 +14,66 @@ class IsActive(BasePermission):
         )
 
 
-class IsActiveOrReadOnly(IsActive):
+class IsActiveOrReadOnly(BasePermission):
     """
     Разрешение на редактирование для авторизованного пользователя при условии,
     что он не забанен, в противном случае - только чтение.
     """
-    def has_permission(self, request, view):
+    def has_permission(self, request, _):
         return (
-            super().has_permission(request, view) or
-            request.method in SAFE_METHODS
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and request.user.is_active
         )
 
 
-class IsAdminOrReadOnly(IsActiveOrReadOnly):
+class IsAdminOrReadOnly(BasePermission):
     """Разрешение на редактирование только админу."""
-    def has_object_permission(self, request, view, obj):
-        return request.user.is_staff or (request.method in SAFE_METHODS)
-
-
-class IsOwnerAdminOrReadOnly(IsAdminOrReadOnly):
-    """
-    Разрешение на редактирование хозяину своих записей (определяется в
-    подклассе), админу - всех записей, в противном случае - чтение.
-    """
-    def has_object_permission(self, request, view, obj):
+    def has_permission(self, request, _):
         return (
-            self.is_owner(request, obj) or
-            super().has_object_permission(request, view, obj)
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and request.user.is_staff
         )
 
-    def is_owner(self, request, obj):
-        """Метод определяется в подклассе для обозначения владельца записи."""
-        raise NotImplementedError
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and request.user.is_staff
+        )
 
 
-class IsAuthorAdminOrReadOnly(IsOwnerAdminOrReadOnly):
+class IsAuthorAdminOrReadOnly(BasePermission):
     """
     Разрешение на редактирование для автора рецепта, админа или только чтение.
     """
-    def is_owner(self, request, obj):
-        return obj.author == request.user
+    def has_permission(self, request, _):
+        return (
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and request.user.is_active
+        )
+
+    def has_object_permission(self, request, _, obj):
+        return (
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and
+            (obj.author == request.user or request.user.is_staff)
+        )
 
 
-class IsFollowerAdminOrReadOnly(IsOwnerAdminOrReadOnly):
+class IsFollowerAdminOrReadOnly(BasePermission):
     """
     Разрешение на редактирование для подписчика, админа или только чтение.
     """
-    def is_owner(self, request, obj):
-        return obj.followed_by.filter(follower=request.user).first()
+    def has_permission(self, request, _):
+        return (
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and request.user.is_active
+        )
+
+    def has_object_permission(self, request, _, obj):
+        return (
+            request.method in SAFE_METHODS or
+            request.user.is_authenticated and (
+                obj.followed_by.filter(follower=request.user).exists() or
+                request.user.is_staff
+            )
+        )

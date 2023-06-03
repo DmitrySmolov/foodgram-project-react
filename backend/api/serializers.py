@@ -6,9 +6,6 @@ from django.core.files.base import ContentFile
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from foodgram.settings import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
-from recipes.models import (Ingredient, IngredientInRecipe, Favorite, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (CurrentUserDefault, HiddenField,
@@ -17,6 +14,9 @@ from rest_framework.serializers import (CurrentUserDefault, HiddenField,
                                         SerializerMethodField)
 from rest_framework.validators import UniqueTogetherValidator
 
+from foodgram.settings import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
+from recipes.models import (Ingredient, IngredientInRecipe, Favorite, Recipe,
+                            ShoppingCart, Tag)
 from users.models import Follow
 
 User = get_user_model()

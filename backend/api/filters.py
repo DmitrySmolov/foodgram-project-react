@@ -3,6 +3,7 @@ from django.db.models import Q
 from django_filters.rest_framework import FilterSet
 from django_filters.rest_framework.filters import (BooleanFilter, CharFilter,
                                                    ModelMultipleChoiceFilter)
+
 from recipes.models import Ingredient, Recipe, Tag
 
 User = get_user_model()
@@ -23,21 +24,19 @@ class RecipeFilter(FilterSet):
 
     def filter_is_favorited(self, queryset, _, value):
         user = self.request.user
-        if user.is_authenticated:
-            if value:
-                return queryset.filter(favorited_by__user=user)
-            else:
-                return queryset.exclude(favorited_by__user=user)
-        return queryset
+        if not user.is_authenticated:
+            return queryset
+        if not value:
+            return queryset.exclude(favorited_by__user=user)
+        return queryset.filter(favorited_by__user=user)
 
     def filter_is_in_shopping_cart(self, queryset, _, value):
         user = self.request.user
-        if user.is_authenticated:
-            if value:
-                return queryset.filter(shopped_by__user=user)
-            else:
-                return queryset.exclude(shopped_by__user=user)
-        return queryset
+        if not user.is_authenticated:
+            return queryset
+        if not value:
+            return queryset.exclude(shopped_by__user=user)
+        return queryset.filter(shopped_by__user=user)
 
 
 class IngredientFilter(FilterSet):

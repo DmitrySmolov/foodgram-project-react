@@ -180,7 +180,6 @@ class IngredientInRecipe(Model):
     class Meta:
         verbose_name = 'Ингрединт в рецепте'
         verbose_name_plural = 'Ингрединты в рецепте'
-        unique_together = ('recipe', 'ingredient')
         ordering = ('recipe', 'ingredient')
         constraints = (UniqueConstraint(
             fields=('recipe', 'ingredient'),

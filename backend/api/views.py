@@ -3,7 +3,6 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Ingredient, IngredientInRecipe, Recipe, Tag)
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -21,6 +20,7 @@ from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              SubscriptionSerializer, TagSerializer,
                              UserSerializer)
 from foodgram.settings import SHOPPING_CART_CONTENT_TYPE
+from recipes.models import (Ingredient, IngredientInRecipe, Recipe, Tag)
 
 User = get_user_model()
 
