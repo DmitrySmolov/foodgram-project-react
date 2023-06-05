@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from rest_framework.permissions import (BasePermission, SAFE_METHODS)
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 User = get_user_model()
 

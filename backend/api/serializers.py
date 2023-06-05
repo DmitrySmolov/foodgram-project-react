@@ -15,7 +15,7 @@ from rest_framework.serializers import (CurrentUserDefault, HiddenField,
 from rest_framework.validators import UniqueTogetherValidator
 
 from foodgram.settings import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
-from recipes.models import (Ingredient, IngredientInRecipe, Favorite, Recipe,
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.models import Follow
 
