@@ -154,7 +154,7 @@ class IngredientInRecipe(Model):
     recipe = ForeignKey(
         to=Recipe,
         on_delete=CASCADE,
-        related_name='ingredients',
+        related_name='recipe_ingredients',
         verbose_name='Рецепт',
         blank=False,
         null=False
@@ -171,7 +171,7 @@ class IngredientInRecipe(Model):
     ingredient = ForeignKey(
         to=Ingredient,
         on_delete=CASCADE,
-        related_name='recipes',
+        related_name='ingredient_recipes',
         verbose_name='Ингредиент',
         blank=False,
         null=False
