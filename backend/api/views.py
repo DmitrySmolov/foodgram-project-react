@@ -20,7 +20,7 @@ from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              SubscriptionSerializer, TagSerializer,
                              UserSerializer)
 from foodgram.settings import SHOPPING_CART_CONTENT_TYPE
-from recipes.models import (Ingredient, IngredientInRecipe, Recipe, Tag)
+from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
 
 User = get_user_model()
 
@@ -48,6 +48,7 @@ class AddRemoveMixin:
         if request.method == 'DELETE':
             serializer.delete()
             return Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=HTTP_400_BAD_REQUEST)
 
 
 class UserViewSet(AddRemoveMixin, UserViewSet):
@@ -126,12 +127,13 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
-        elif self.action in ('create', 'update'):
+        if self.action in ('create', 'update'):
             return RecipeCreateUpdateSerializer
-        elif self.action == 'favorite':
+        if self.action == 'favorite':
             return FavoriteSerializer
-        elif self.action == 'shopping_cart':
+        if self.action == 'shopping_cart':
             return ShoppingCartSerializer
+        return RecipeReadSerializer
 
     def get_permissions(self):
         if self.action == 'create':
