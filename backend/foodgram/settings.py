@@ -70,7 +70,7 @@ DATABASES = {
         'ENGINE': os.getenv(
             key='DB_ENGINE', default='django.db.backends.postgresql'
         ),
-        'NAME': os.getenv(key='DB_NAME', default='postgres'),
+        'NAME': os.getenv(key='POSTGRES_DB', default='postgres'),
         'USER': os.getenv(key='POSTGRES_USER', default='postgres'),
         'PASSWORD': os.getenv(key='POSTGRES_PASSWORD', default='password'),
         'HOST': os.getenv(key='DB_HOST', default='db'),
