@@ -17,7 +17,7 @@ services:
     restart: always
 
   backend:
-    image: smorilla/foodgram_backend:v1.2023
+    image: smorilla/foodgram_backend:v2.2023
     volumes:
       - static_value:/app/static/
       - media_value:/app/media/
