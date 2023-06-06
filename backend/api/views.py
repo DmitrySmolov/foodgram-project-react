@@ -20,7 +20,7 @@ from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              SubscriptionSerializer,
                              SubscriptionsListSerializer, TagSerializer,
                              UserSerializer)
-from foodgram.settings import SHOPPING_CART_CONTENT_TYPE
+from foodgram.settings import DEFAULT_CHARSET, SHOPPING_CART_CONTENT_TYPE
 from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
 
 User = get_user_model()
@@ -192,7 +192,10 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
         text += '\n\nFOODGRAM'
         filename = f'{user.get_username()}_shopping_cart.txt'
         response = HttpResponse(
-            content=text, content_type=SHOPPING_CART_CONTENT_TYPE
+            content=text.encode(encoding=DEFAULT_CHARSET),
+            content_type=(
+                f'{SHOPPING_CART_CONTENT_TYPE}; charset={DEFAULT_CHARSET}'
+            )
         )
         response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
