@@ -155,6 +155,38 @@ class SubscriptionSerializer(ModelSerializer):
         return representation
 
 
+class SubscriptionsListSerializer(ModelSerializer):
+    """Сериализатор для отображения подписок пользователя."""
+    recipes = SerializerMethodField(method_name='get_recipes')
+    recipes_count = SerializerMethodField(method_name='get_recipes_count')
+    is_subscribed = SerializerMethodField(method_name='get_is_subscribed')
+
+    class Meta:
+        model = User
+        fields = (
+            'email', 'id', 'username', 'first_name', 'last_name',
+            'is_subscribed', 'recipes', 'recipes_count'
+        )
+        read_only_fields = fields
+
+    def get_recipes(self, obj):
+        limit = self.context.get('recipes_limit')
+        recipes = obj.recipes.all()
+        if limit:
+            recipes = recipes[:int(limit)]
+        return SimpleRecipeSerializer(instance=recipes, many=True).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        return (
+            user.is_authenticated and
+            user.follows.filter(followee=obj).exists()
+        )
+
+
 class TagSerializer(ModelSerializer):
     """Сериализатор тегов."""
     class Meta:

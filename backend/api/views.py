@@ -17,7 +17,8 @@ from api.permissions import (IsActive, IsAdminOrReadOnly,
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
                              RecipeCreateUpdateSerializer,
                              RecipeReadSerializer, ShoppingCartSerializer,
-                             SubscriptionSerializer, TagSerializer,
+                             SubscriptionSerializer,
+                             SubscriptionsListSerializer, TagSerializer,
                              UserSerializer)
 from foodgram.settings import SHOPPING_CART_CONTENT_TYPE
 from recipes.models import Ingredient, IngredientInRecipe, Recipe, Tag
@@ -78,7 +79,7 @@ class UserViewSet(AddRemoveMixin, UserViewSet):
         queryset = User.objects.filter(followed_by__follower=request.user)
         recipes_limit = request.query_params.get('recipes_limit')
         pages = self.paginate_queryset(queryset)
-        serializer = SubscriptionSerializer(
+        serializer = SubscriptionsListSerializer(
             instance=pages,
             many=True,
             context={
