@@ -128,7 +128,7 @@ class RecipeViewSet(AddRemoveMixin, ModelViewSet):
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeReadSerializer
-        if self.action in ('create', 'update'):
+        if self.action in ('create', 'update', 'partial_update'):
             return RecipeCreateUpdateSerializer
         if self.action == 'favorite':
             return FavoriteSerializer
