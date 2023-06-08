@@ -14,7 +14,7 @@ from rest_framework.serializers import (CurrentUserDefault, HiddenField,
                                         SerializerMethodField)
 from rest_framework.validators import UniqueTogetherValidator
 
-from foodgram.settings import MIN_COOKING_TIME, MIN_INGREDIENT_AMOUNT
+from foodgram.settings import MIN_COOKING_TIME
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShoppingCart, Tag)
 from users.models import Follow
@@ -220,6 +220,13 @@ class IngredientInRecipeSerializer(ModelSerializer):
             'measurement_unit',
             'amount'
         )
+        validators = [
+            UniqueTogetherValidator(
+                queryset=IngredientInRecipe.objects.all(),
+                fields=('ingredient', 'recipe'),
+                message="В рецепте повторяются ингредиенты."
+            )
+        ]
 
 
 class RecipeReadSerializer(ModelSerializer):
@@ -297,38 +304,6 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     class Meta:
         model = Recipe
         exclude = ('pub_date',)
-
-    def validate_ingredients(self, value):
-        if not value:
-            raise ValidationError(detail={
-                'ingredients': [{'id': ['В рецепте нет ингредиентов.']}]
-            })
-        ingredients = []
-        for item in value:
-            ingredient = item.get('ingredient')
-            if not ingredient:
-                raise ValidationError(detail={
-                    'ingredients': [
-                        {'id': ['В рецепте указаны недоступные ингредиенты.']}
-                    ]
-                })
-            if item in ingredients:
-                raise ValidationError(detail={
-                    'ingredients': [
-                        {'id': ['В рецепте повторяются ингредиенты.']}
-                    ]
-                })
-            if item['amount'] < MIN_INGREDIENT_AMOUNT:
-                raise ValidationError(detail={
-                    'ingredients': [{
-                        'amount': [(
-                            'В рецепте есть ингредиент в количестве '
-                            f'меньше {MIN_INGREDIENT_AMOUNT}.'
-                        )]
-                    }]
-                })
-            ingredients.append(item)
-        return value
 
     def validate_tags(self, value):
         if not value:
