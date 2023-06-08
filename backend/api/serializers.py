@@ -301,7 +301,7 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_ingredients(self, value):
         if not value:
             raise ValidationError(detail={
-                'ingredients': [{'id': 'В рецепте нет ингредиентов.'}]
+                'ingredients': [{'id': ['В рецепте нет ингредиентов.']}]
             })
         ingredients = []
         for item in value:
@@ -309,22 +309,22 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
             if not ingredient:
                 raise ValidationError(detail={
                     'ingredients': [
-                        {'id': 'В рецепте указаны недоступные ингредиенты.'}
+                        {'id': ['В рецепте указаны недоступные ингредиенты.']}
                     ]
                 })
             if item in ingredients:
                 raise ValidationError(detail={
                     'ingredients': [
-                        {'id': 'В рецепте повторяются ингредиенты.'}
+                        {'id': ['В рецепте повторяются ингредиенты.']}
                     ]
                 })
             if item['amount'] < MIN_INGREDIENT_AMOUNT:
                 raise ValidationError(detail={
                     'ingredients': [{
-                        'amount': (
+                        'amount': [(
                             'В рецепте есть ингредиент в количестве '
                             f'меньше {MIN_INGREDIENT_AMOUNT}.'
-                        )
+                        )]
                     }]
                 })
             ingredients.append(item)
