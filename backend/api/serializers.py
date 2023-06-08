@@ -300,56 +300,58 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise ValidationError(
-                detail='В рецепте нет ингредиентов.'
-            )
+            raise ValidationError(detail={
+                'ingredients': 'В рецепте нет ингредиентов.'
+            })
         ingredients = []
         for item in value:
             ingredient = item.get('ingredient')
             if not ingredient:
-                raise ValidationError(
-                    detail='В рецепте указаны недоступные ингредиенты.'
-                )
-            if item in ingredients:
-                raise ValidationError(
-                    detail='В рецепте повторяются ингредиенты.'
-                )
-            if item['amount'] < MIN_INGREDIENT_AMOUNT:
-                raise ValidationError(
-                    detail=(
-                        'В рецепте есть ингредиент в количестве '
-                        f'меньше {MIN_INGREDIENT_AMOUNT}.'
+                raise ValidationError(detail={
+                    'ingredients': (
+                        'В рецепте указаны недоступные ингредиенты.'
                     )
-                )
+                })
+            if item in ingredients:
+                raise ValidationError(detail={
+                    'ingredients': 'В рецепте повторяются ингредиенты.'
+                })
+            if item['amount'] < MIN_INGREDIENT_AMOUNT:
+                raise ValidationError(detail={
+                    'ingredients': (
+                            'В рецепте есть ингредиент в количестве '
+                            f'меньше {MIN_INGREDIENT_AMOUNT}.'
+                    )
+                })
             ingredients.append(item)
         return value
 
     def validate_tags(self, value):
         if not value:
-            raise ValidationError(
-                detail='В рецепте нет ни одного тега.'
-            )
+            raise ValidationError(detail={
+                'tags': 'В рецепте нет ни одного тега.'
+            })
         tags = []
         for item in value:
             if not Tag.objects.filter(id=item.id).exists():
-                raise ValidationError(
-                    detail='В рецепте указаны недоступные теги.'
-                )
+                raise ValidationError(detail={
+                    'tags': 'В рецепте указаны недоступные теги.'
+                })
             if item in tags:
-                raise ValidationError(
-                    detail='В рецепте повторяются теги.'
-                )
+                raise ValidationError(detail={
+                    'tags': 'В рецепте повторяются теги.'
+                })
             tags.append(item)
         return value
 
     def validate_cooking_time(self, value):
         if value < MIN_COOKING_TIME:
-            raise ValidationError(
-                detail=(
-                    f'Указано время приготовления меньше {MIN_COOKING_TIME}'
-                    ' минуты.'
+            raise ValidationError(detail={
+                'cooking_time': (
+                    'Указано время приготовления меньше '
+                    f'{MIN_COOKING_TIME} минуты.'
                 )
-            )
+            })
         return value
 
     @transaction.atomic
