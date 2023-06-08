@@ -301,27 +301,27 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_ingredients(self, value):
         if not value:
             raise ValidationError(detail={
-                'ingredients': 'В рецепте нет ингредиентов.'
+                'ingredients': ['В рецепте нет ингредиентов.']
             })
         ingredients = []
         for item in value:
             ingredient = item.get('ingredient')
             if not ingredient:
                 raise ValidationError(detail={
-                    'ingredients': (
+                    'ingredients': [
                         'В рецепте указаны недоступные ингредиенты.'
-                    )
+                    ]
                 })
             if item in ingredients:
                 raise ValidationError(detail={
-                    'ingredients': 'В рецепте повторяются ингредиенты.'
+                    'ingredients': ['В рецепте повторяются ингредиенты.']
                 })
             if item['amount'] < MIN_INGREDIENT_AMOUNT:
                 raise ValidationError(detail={
-                    'ingredients': (
+                    'ingredients': [
                             'В рецепте есть ингредиент в количестве '
                             f'меньше {MIN_INGREDIENT_AMOUNT}.'
-                    )
+                    ]
                 })
             ingredients.append(item)
         return value
@@ -329,17 +329,17 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_tags(self, value):
         if not value:
             raise ValidationError(detail={
-                'tags': 'В рецепте нет ни одного тега.'
+                'tags': ['В рецепте нет ни одного тега.']
             })
         tags = []
         for item in value:
             if not Tag.objects.filter(id=item.id).exists():
                 raise ValidationError(detail={
-                    'tags': 'В рецепте указаны недоступные теги.'
+                    'tags': ['В рецепте указаны недоступные теги.']
                 })
             if item in tags:
                 raise ValidationError(detail={
-                    'tags': 'В рецепте повторяются теги.'
+                    'tags': ['В рецепте повторяются теги.']
                 })
             tags.append(item)
         return value
@@ -347,10 +347,10 @@ class RecipeCreateUpdateSerializer(ModelSerializer):
     def validate_cooking_time(self, value):
         if value < MIN_COOKING_TIME:
             raise ValidationError(detail={
-                'cooking_time': (
+                'cooking_time': [
                     'Указано время приготовления меньше '
                     f'{MIN_COOKING_TIME} минуты.'
-                )
+                ]
             })
         return value
 
