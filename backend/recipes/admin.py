@@ -27,8 +27,8 @@ class IngredientInRecipeInline(TabularInline):
 class RecipeAdmin(ModelAdmin):
     inlines = (IngredientInRecipeInline,)
     list_display = ('name', 'author', 'added_to_favorite')
-    search_fields = ('name', 'author__username')
-    list_filter = ('name', 'author__username', 'tags__name')
+    search_fields = ('name', 'author__username', 'author__email')
+    list_filter = ('tags__name',)
 
     @display(description='В избранных (кол-во раз)')
     def added_to_favorite(self, obj):
@@ -38,19 +38,22 @@ class RecipeAdmin(ModelAdmin):
 @register(IngredientInRecipe)
 class IngredientInRecipeAdmin(ModelAdmin):
     list_display = ('recipe', 'amount', 'ingredient')
-    search_fields = ('recipe__name', 'ingredient__name')
-    list_filter = ('recipe__name', 'ingredient__name')
+    search_fields = (
+        'recipe__author__username', 'recipe__author__email',
+        'recipe__name', 'ingredient__name'
+    )
+    list_filter = ('recipe__tags__name',)
 
 
 @register(Favorite)
 class FavoriteAdmin(ModelAdmin):
     list_display = ('user', 'recipe')
-    search_fields = ('user__username', 'recipe__name')
-    list_filter = ('user__username', 'recipe__name')
+    search_fields = ('user__username', 'user__email', 'recipe__name')
+    list_filter = ('recipe__tags__name',)
 
 
 @register(ShoppingCart)
 class ShoppingCartAdmin(ModelAdmin):
     list_display = ('user', 'recipe')
-    search_fields = ('user__username', 'recipe__name')
-    list_filter = ('user__username', 'recipe__name')
+    search_fields = ('user__username', 'user__email', 'recipe__name')
+    list_filter = ('recipe__tags__name',)
