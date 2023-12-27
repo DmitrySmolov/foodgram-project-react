@@ -52,6 +52,10 @@ Foodgram предлагает следующие функции:
 - **FRONTEND**: команда **Яндекс.Практикум**
 - **BACKEND**: Дмитрий Смолов
 
+## Лицензия
+
+[MIT](https://choosealicense.com/licenses/mit/)
+
 <!-- MARKDOWN LINKS & BADGES -->
 
 [workflow-status-badge]: https://github.com/DmitrySmolov/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg
