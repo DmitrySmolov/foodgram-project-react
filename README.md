@@ -1,24 +1,19 @@
-![workflow status badge](https://github.com/DmitrySmolov/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
+![workflow status badge][workflow-status-badge]
 
 # Foodgram
 
 Foodgram - это онлайн-сервис, на котором пользователи могут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
 
-### Технологии:
-- Python 3.9
-- Django 4.2
-- djangorestframework 3.14
+## Технологии:
 
-## Начало работы
+[![Python][Python-badge]][Python-url]
+[![Django][Django-badge]][Django-url]
+[![DRF][DRF-badge]][DRF-url]
+[![Docker][Docker-badge]][Docker-url]
 
-Готовый проект доступен по данной [>>ССЫЛКЕ<<](http://158.160.101.154) <br />
-Псс. Псс... Доступ администратора нада? <br />
-> У кого самое лучшее **Имя пользователя**? У тебя в Пачке! :sunglasses: <br />
-> У кого самый лучший **Пароль**? У тебя в Пачке! :sunglasses: <br />
+## Установка
 
-Если же вы хотите развернуть свою собственную версию, для начала вам потребуется установить Docker и docker compose на вашей виртуальной машине. Инструкции по установке для вашей операционной системы можно найти на официальном сайте Docker.
-
-### Установка
+Для развёртывания проетка вам потребуется установить Docker и docker compose на вашей виртуальной машине. Инструкции по установке для вашей операционной системы можно найти на официальном сайте [Docker][Docker-url].
 
 1. Скопируйте папки frontend и infra этого репозитория на вашу виртуальную машину.
 2. В папке infra создайте файл переменных окружения по данному образцу:
@@ -55,4 +50,20 @@ Foodgram предлагает следующие функции:
 ## Авторство
 
 - **FRONTEND**: команда **Яндекс.Практикум**
-- **BACKEND**: Дмитрий Смолов. А также множество студентов Яндекс Практикума, наставников факультета Бэкенд когорты 19+ и мой код-ревьювер Станислав Лосев, без чьей помощи я бы не обошёлся! :purple_heart:
+- **BACKEND**: Дмитрий Смолов
+
+<!-- MARKDOWN LINKS & BADGES -->
+
+[workflow-status-badge]: https://github.com/DmitrySmolov/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg
+
+[Python-url]: https://www.python.org/
+[Python-badge]: https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white
+
+[Django-url]: https://www.djangoproject.com/
+[Django-badge]: https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white
+
+[DRF-url]: https://www.django-rest-framework.org/
+[DRF-badge]: https://img.shields.io/badge/DRF-80DAEB?style=for-the-badge&logo=django&logoColor=white
+
+[Docker-url]: https://www.docker.com/
+[Docker-badge]: https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white
